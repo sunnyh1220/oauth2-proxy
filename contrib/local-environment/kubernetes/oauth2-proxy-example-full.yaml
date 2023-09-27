@@ -265,7 +265,7 @@ spec:
           {}
       containers:
       - name: main
-        image: "quay.io/dexidp/dex:v2.23.0"
+        image: "ghcr.io/dexidp/dex:v2.32.0"
         imagePullPolicy: IfNotPresent
         command:
         - /usr/local/bin/dex
@@ -294,7 +294,10 @@ spec:
           timeoutSeconds: 1
           failureThreshold: 1
         env:
-          []
+        - name: KUBERNETES_POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
         volumeMounts:
         - mountPath: /etc/dex/cfg
           name: config
@@ -470,7 +473,7 @@ spec:
         []
 ---
 # Source: kubernetes/charts/dex/templates/ingress.yaml
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: oauth2-proxy-example-dex
@@ -486,12 +489,15 @@ spec:
       http:
         paths:
           - path: /
+            pathType: Prefix
             backend:
-              serviceName: oauth2-proxy-example-dex
-              servicePort: 32000
+              service:
+                name: oauth2-proxy-example-dex
+                port:
+                  number: 32000
 ---
 # Source: kubernetes/charts/hello-world/templates/ingress.yaml
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: oauth2-proxy-example-hello-world
@@ -511,12 +517,15 @@ spec:
       http:
         paths:
           - path: /
+            pathType: Prefix
             backend:
-              serviceName: oauth2-proxy-example-hello-world
-              servicePort: 9080
+              service:
+                name: oauth2-proxy-example-hello-world
+                port:
+                  number: 9080
 ---
 # Source: kubernetes/charts/httpbin/templates/ingress.yaml
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: oauth2-proxy-example-httpbin
@@ -536,12 +545,15 @@ spec:
       http:
         paths:
           - path: /
+            pathType: Prefix
             backend:
-              serviceName: oauth2-proxy-example-httpbin
-              servicePort: 80
+              service:
+                name: oauth2-proxy-example-httpbin
+                port:
+                  number: 80
 ---
 # Source: kubernetes/charts/oauth2-proxy/templates/ingress.yaml
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   labels:
@@ -559,6 +571,9 @@ spec:
       http:
         paths:
           - path: /
+            pathType: Prefix
             backend:
-              serviceName: oauth2-proxy-example-oauth2-proxy-sample
-              servicePort: 80
+              service:
+                name: oauth2-proxy-example-oauth2-proxy-sample
+                port:
+                  number: 80
