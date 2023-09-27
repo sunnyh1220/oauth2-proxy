@@ -7,12 +7,28 @@ all:
 .PHONY: deploy
 create-cluster:
 	kind create cluster --name oauth2-proxy --config kind-cluster.yaml
+	make setup-images
 	make setup-dns
 	make setup-ingress
 
+.PHONY: setup-images
+setup-images:
+	docker pull ghcr.io/dexidp/dex:v2.32.0
+	docker pull conservis/hello-world:1.0.0
+	docker pull kennethreitz/httpbin:latest
+	docker pull quay.io/pusher/oauth2_proxy:v5.1.0
+	kind load docker-image --name oauth2-proxy ghcr.io/dexidp/dex:v2.32.0
+	kind load docker-image --name oauth2-proxy conservis/hello-world:1.0.0
+	kind load docker-image --name oauth2-proxy kennethreitz/httpbin:latest
+	kind load docker-image --name oauth2-proxy quay.io/pusher/oauth2_proxy:v5.1.0
+	# docker pull registry.k8s.io/ingress-nginx/controller:v1.9.0
+	# docker pull registry.k8s.io/ingress-nginx/kube-webhook-certgen:v20230407
+	kind load docker-image registry.k8s.io/ingress-nginx/controller:v1.9.0 --name oauth2-proxy
+	kind load docker-image registry.k8s.io/ingress-nginx/kube-webhook-certgen:v20230407 --name oauth2-proxy
+
 .PHONY: setup-ingress
 setup-ingress:
-	kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/static/provider/kind/deploy.yaml
+	kubectl apply -f nginx-ingress_deploy.yaml
 	kubectl --namespace ingress-nginx rollout status --timeout 5m deployment/ingress-nginx-controller
 
 # default Pod CIDR is 10.244.0.0/16 https://github.com/kubernetes-sigs/kind/blob/a6e8108025bc7a9440beedb8ef7714aec84fe87e/pkg/apis/config/v1alpha4/default.go#L52
